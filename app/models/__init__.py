@@ -3,7 +3,17 @@ from app.models.database_models import (
     CompanyID,
     Language,
     CompanyName,
+    CompanyNameRelation,
     Tag,
+    TagRelation,
 )
 
-__all__ = ["CsvCompnay", "CompanyID", "Language", "CompanyName", "Tag"]
+__all__ = [
+    "CsvCompnay",
+    "CompanyID",
+    "Language",
+    "CompanyName",
+    "CompanyNameRelation",
+    "Tag",
+    "TagRelation",
+]

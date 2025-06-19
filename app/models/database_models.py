@@ -1,5 +1,15 @@
 from sqlalchemy.ext.mutable import MutableList
-from sqlalchemy import Column, Integer, Text, ForeignKey, ARRAY, DateTime, func
+from sqlalchemy import (
+    Column,
+    Integer,
+    Text,
+    ForeignKey,
+    ARRAY,
+    DateTime,
+    UniqueConstraint,
+    func,
+)
+
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.utils.database import Base
@@ -23,6 +33,9 @@ class Language(Base):
 class CompanyName(Base):
     """회사 정보 모델"""
     __tablename__ = "tbl_company_names"
+    __table_args__ = (
+        UniqueConstraint('name', 'relation_id', name='tbl_company_names_name_rel_id_unique'),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(Text, nullable=False)
@@ -31,6 +44,7 @@ class CompanyName(Base):
         ForeignKey("tbl_company_ids.id"),
         nullable=False,
     )
+    relation_id = Column(Integer, nullable=False)
     language_id = Column(
         Integer,
         ForeignKey("tbl_languages.id"),
@@ -43,9 +57,29 @@ class CompanyName(Base):
     language = relationship("Language", backref="company_names")
 
 
+class CompanyNameRelation(Base):
+    """회사 이름 의미 관계 모델"""
+    __tablename__ = "tbl_company_name_relations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(
+        Integer,
+        ForeignKey("tbl_company_ids.id"),
+        nullable=False,
+    )
+    name_ids = Column(MutableList.as_mutable(ARRAY(Integer)), nullable=False)
+    add_date = Column(DateTime, nullable=False, default=func.now())
+    
+    # 관계 설정
+    company = relationship("CompanyID", backref="company_name_relations")
+
+
 class Tag(Base):
     """태그 정보 모델"""
     __tablename__ = "tbl_tags"
+    __table_args__ = (
+        UniqueConstraint('tag_name', 'relation_id', name='tbl_tags_tag_name_rel_id_unique'),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     tag_name = Column(Text, nullable=False)
