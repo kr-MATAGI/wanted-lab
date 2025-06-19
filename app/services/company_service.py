@@ -18,7 +18,7 @@ from app.schemas import (
 from app.utils import get_db, setup_logger
 
 # Logger
-logger = setup_logger("CompanyService")
+logger = setup_logger("Company_Service")
 
 class CompanyService:
     async def add_company_from_csv(
@@ -89,13 +89,13 @@ class CompanyService:
                 db_results = await session.execute(stmt)
                 rows = db_results.all()
                 for row in rows:
-                    company_name = row[0]  # CompanyName 객체
-                    tag = row[1]  # Tag 객체
+                    company_name_obj = row[0]  # CompanyName 객체
+                    tag_obj = row[1]  # Tag 객체
 
                     if not results["company_name"]:
-                        results["company_name"] = company_name.name
+                        results["company_name"] = company_name_obj.name
                     
-                    results["tags"].append(tag.tag_name)                    
+                    results["tags"].append(tag_obj.tag_name)                    
 
         except Exception as e:
             logger.error(f"[ERROR] get_company_info: {e}")
