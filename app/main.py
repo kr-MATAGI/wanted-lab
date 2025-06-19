@@ -28,9 +28,9 @@ app = FastAPI(
 )
 
 # Router 등록
-app.include_router(search_router, prefix="search")
-app.include_router(company_router, prefix="companies")
-app.include_router(tags_router, prefix="tags")
+app.include_router(search_router, prefix="/search", tags=["search"])
+app.include_router(company_router, prefix="/companies", tags=["companies"])
+app.include_router(tags_router, prefix="/tags", tags=["tags"])
 
 
 # Root

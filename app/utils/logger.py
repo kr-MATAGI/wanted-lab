@@ -20,7 +20,7 @@ def setup_logger(name: str, log_level: int = logging.DEBUG):
         return logger
     
     # Format 설정
-    log_format = logging.FOrmatter(
+    log_format = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )

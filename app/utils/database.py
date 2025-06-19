@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import declarative_base
 
-from app.utils import settings
+from app.utils.settings import settings
 
 
 # 비동기 데이터베이스 엔진
