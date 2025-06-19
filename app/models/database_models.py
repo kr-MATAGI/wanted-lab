@@ -47,7 +47,7 @@ class Tag(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     tag_name = Column(Text, nullable=False)
-    company_id = Column(ARRAY(Integer), nullable=False)
+    company_ids = Column(ARRAY(Integer), nullable=False)
     language_id = Column(
         Integer, 
         ForeignKey("tbl_languages.id"),

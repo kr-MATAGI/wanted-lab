@@ -10,7 +10,7 @@ from app.utils.logger import setup_logger
 logger = setup_logger("Parser")
 
 class Parser:
-    def parse_csv_by_file_path(self, file_path: str):
+    async def parse_csv_by_file_path(self, file_path: str):
         
         company_lists: List[CsvCompnay] = []
 

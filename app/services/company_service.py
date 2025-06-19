@@ -1,8 +1,15 @@
 from fastapi import UploadFile
 from typing import List
+from sqlalchemy import select
 
 from app.utils import Parser
-from app.models import CsvCompnay
+from app.models import (
+    CsvCompnay,
+    CompanyID,
+    Language,
+    CompanyName,
+    Tag,
+)
 from app.schemas import (
     CompanyInfoResponse,
     CompanyAddRequest,
@@ -16,31 +23,92 @@ logger = setup_logger("CompanyService")
 class CompanyService:
     async def add_company_from_csv(
         self,
-        file_path: UploadFile,
+        file_path: str,
     ):
         """
         업로드된 csv 파일 업로드 처리
         """
         parser: Parser = Parser()
-        results: List[CsvCompnay] = parser.parse_csv_by_file_path(file_path)
+        csv_results: List[CsvCompnay] = await parser.parse_csv_by_file_path(file_path)
 
         db = get_db()
-        async for session in db:
-            try:
-                session.add()
-            
-            except Exception as e:
-                logger.error(f"Error adding company from CSV: {e}")
-            
+        try:
+            async for session in db:
+                for csv_item in csv_results:
+                    new_company: CompanyAddRequest = CompanyAddRequest(
+                        company_name={
+                            "ko": csv_item.company_ko,
+                            "en": csv_item.company_en,
+                            "ja": csv_item.company_ja,
+                        },
+                        tags=[
+                            csv_item.tag_ko,
+                            csv_item.tag_en,
+                            csv_item.tag_ja,
+                        ],
+                    )
+
+                    await self.add_new_company(new_company, "ko")
         
-        return len(results)
+        except Exception as e:
+            raise e
+        
+        finally:
+            await db.aclose()
+        
+        return
+
 
     async def get_company_info(
         self,
         company_name: str,
         language: str,
+        perfact_match: bool = False,
     ):
-        results: CompanyInfoResponse = ''
+        """
+        회사명을 검색해서 해당 정보 모두 가져옴
+        """
+        results = {
+            "company_name": "",
+            "tags": [],
+        }
+        
+        db = get_db()
+        try:
+            async for session in db:
+                stmt = select(
+                    CompanyName,
+                    Tag,
+                    Language,
+                ).where(
+                    CompanyName.name == company_name,
+                    # if perfact_match 
+                    # else CompanyName.name.like(f"%{company_name}%"),
+                    Language.language_type == language,
+                    CompanyName.language_id == Language.id,
+                    Tag.language_id == Language.id,
+                )
+                
+                db_results = await session.execute(stmt)
+                rows = db_results.all()
+                for row in rows:
+                    company_name = row[0]  # CompanyName 객체
+                    tag = row[1]  # Tag 객체
+
+                    if not results["company_name"]:
+                        results["company_name"] = company_name.name
+                    
+                    results["tags"].append(tag.tag_name)                    
+
+        except Exception as e:
+            logger.error(f"[ERROR] get_company_info: {e}")
+            raise e
+
+        finally:
+            await db.aclose()
+            
+        return results
+    
 
 
     async def add_new_company(
@@ -48,11 +116,20 @@ class CompanyService:
         new_company_info: CompanyAddRequest,
         language: str,
     ):
-        async with get_db() as session:
-            pass
+        db = get_db()
+        try:
+            async for session in db:
+                
+                pass
+                
 
+        except Exception as e:
+            raise e
         
-        return
+        finally:
+            await db.aclose()
+        
+        return None
     
     async def add_new_tag(
         self,
@@ -60,11 +137,6 @@ class CompanyService:
         tags: List[TagInfo],
         language: str,
     ):
-        # 회사가 이미 존재하는 지 확인
-
-        # 기존에 있는 회사인 경우 회사명, 태그 업데이트 (새로운 언어 확인)
-
-        # 회사 업데이트
         pass
 
 
@@ -75,6 +147,3 @@ class CompanyService:
         language: str,
     ):
         pass
-
-
-    

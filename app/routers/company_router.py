@@ -1,6 +1,7 @@
+import os
 import csv
 from fastapi import APIRouter, Request, UploadFile, File, HTTPException
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from app.services import CompanyService
 from app.schemas import (
@@ -9,10 +10,14 @@ from app.schemas import (
     TagAddRequest,
     TagInfo,
 )
+from app.utils import setup_logger
 
 
 # Router
 router = APIRouter()
+
+# Logger 
+logger = setup_logger("CompanyRouter")
 
 # Global Variable
 ALLOWED_EXTENSIONS = {"csv"}
@@ -45,21 +50,21 @@ async def get_company_info(
     """
 
     company_service: CompanyService = CompanyService()
-    company_info: CompanyInfoResponse = await company_service.get_company_info(
+    company_info: Dict[str, Any] = await company_service.get_company_info(
         company_name,
         language=request.headers.get("x-wanted-language", "ko"),
     )
 
-    return
+    return CompanyInfoResponse(**company_info)
 
 
 ### POST
-@router.get("/upload")
+@router.post("/upload")
 async def upload_company_from_csv(
     file: UploadFile = File(...),
 ):
     """
-    CSV 파일 업로드를 통해 초기 회사 정보 추가
+    CSV 파일 업로드를 통해 초기 회사 정보 추가 (임의 추가 함수)
     
     Args:
         pass
@@ -73,16 +78,26 @@ async def upload_company_from_csv(
         raise HTTPException(status_code=400, detail="Invalid file type")
     
     try:
-        file_path = f"./uploads/{file.filename}"
+        os.makedirs("./tmps", exist_ok=True)
+        
+        file_path = f"./tmps/{file.filename}"
         with open(file_path, "wb") as f:
             f.write(await file.read())
+        logger.info(f"Uploaded file: {file_path}")
+
+        company_service: CompanyService = CompanyService()
+        results: Dict[str, str] = await company_service.add_company_from_csv(
+            file_path,
+    )
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-    company_service: CompanyService = CompanyService()
-    results: Dict[str, str] = await company_service.add_company_from_csv(
-        file_path,
-    )
+    
+    finally:
+        # 업로드된 파일 삭제
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            logger.info(f"Deleted uploaded file: {file_path}")
     
     return results
 
