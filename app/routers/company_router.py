@@ -6,6 +6,7 @@ from app.services import CompanyService
 from app.schemas import (
     CompanyInfoResponse,
     CompanyAddRequest,
+    CompanyAddResponse,
     TagAddRequest,
     TagInfo,
 )
@@ -113,25 +114,24 @@ async def add_new_company(
     request: Request,
 ):
     """
-    3. 새로운 회사 추가
+    - 새로운 회사 추가
         - 새로운 언어도 같이 추가 될 수 있다.
         - 저장 완료 후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
         
-    Args:
-        new_company_info (CompanyAddRequest): 새로운 회사 정보
+    - Args:
+        - new_company_info (CompanyAddRequest): 새로운 회사 정보
     
-    Returns:
-        @TODO:
-        ???: 저장된 회사 정보
+    - Returns:
+        - results (CompanyAddResponse): 추가된 회사 정보
     """
 
     company_service: CompanyService = CompanyService()
     add_results: Dict[str, str] = await company_service.add_new_company(
-        new_company_info,
-        language=request.headers.get("x-wanted-language", "ko"),
+        new_company_info.model_dump(),
+        language=request.headers.get("x-wanted-language", "tw"),
     )
 
-    return add_results
+    return CompanyAddResponse(**add_results)
 
 
 

@@ -1,3 +1,4 @@
+from sqlalchemy.ext.mutable import MutableList
 from sqlalchemy import Column, Integer, Text, ForeignKey, ARRAY, DateTime, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -48,7 +49,7 @@ class Tag(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     tag_name = Column(Text, nullable=False)
-    company_ids = Column(ARRAY(Integer), nullable=False)
+    company_ids = Column(MutableList.as_mutable(ARRAY(Integer)), nullable=False)
     language_id = Column(
         Integer, 
         ForeignKey("tbl_languages.id"),
