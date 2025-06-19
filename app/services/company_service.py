@@ -63,7 +63,6 @@ class CompanyService:
         self,
         company_name: str,
         language: str,
-        perfact_match: bool = False,
     ):
         """
         회사명을 검색해서 해당 정보 모두 가져옴
@@ -82,8 +81,6 @@ class CompanyService:
                     Language,
                 ).where(
                     CompanyName.name == company_name,
-                    # if perfact_match 
-                    # else CompanyName.name.like(f"%{company_name}%"),
                     Language.language_type == language,
                     CompanyName.language_id == Language.id,
                     Tag.language_id == Language.id,
