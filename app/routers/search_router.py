@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from typing import List
+from typing import List, Dict
 
 from app.services import SearchService
 from app.schemas import SearchResponse
@@ -28,14 +28,9 @@ async def search_company_name(query: str, request: Request):
 
     # 검색
     search_service: SearchService = SearchService()
-    search_results: List[SearchResponse] = await search_service.search_company_name(
+    search_results: List[Dict[str, str]] = await search_service.search_company_name(
         query,
         wanted_lang,
     )
     
-
-    return search_results
-
-
-
-
+    return [SearchResponse(**result) for result in search_results]
