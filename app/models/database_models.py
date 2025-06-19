@@ -83,6 +83,7 @@ class Tag(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     tag_name = Column(Text, nullable=False)
+    relation_id = Column(Integer, nullable=False)
     company_ids = Column(MutableList.as_mutable(ARRAY(Integer)), nullable=False)
     language_id = Column(
         Integer, 
