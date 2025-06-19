@@ -58,3 +58,12 @@ class Tag(Base):
 
     # 관계 설정
     language = relationship("Language", backref="tags")
+
+
+class TagRelation(Base):
+    """ 공통 태그 의미 관계 모델"""
+    __tablename__ = "tbl_tag_relations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    tag_ids = Column(MutableList.as_mutable(ARRAY(Integer)), nullable=False)
+    add_date = Column(DateTime, nullable=False, default=func.now())
