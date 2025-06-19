@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, ARRAY
+from sqlalchemy import Column, Integer, Text, ForeignKey, ARRAY, DateTime, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.utils.database import Base
@@ -8,7 +8,7 @@ class CompanyID(Base):
     __tablename__ = "tbl_company_ids"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    company_id = Column(Integer, nullable=False)
+    add_date = Column(DateTime, nullable=False, default=func.now())
 
 
 class Language(Base):
@@ -35,6 +35,7 @@ class CompanyName(Base):
         ForeignKey("tbl_languages.id"),
         nullable=False,
     )
+    add_date = Column(DateTime, nullable=False, default=func.now())
     
     # 관계 설정
     company = relationship("CompanyID", backref="company_names")
@@ -52,6 +53,7 @@ class Tag(Base):
         Integer, 
         ForeignKey("tbl_languages.id"),
     )
+    add_date = Column(DateTime, nullable=False, default=func.now())
 
     # 관계 설정
     language = relationship("Language", backref="tags")
