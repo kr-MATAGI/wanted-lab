@@ -8,3 +8,7 @@ class TagInfo(BaseModel):
 class TagAddRequest(BaseModel):
     compnay_name: str
     tags: List[TagInfo]
+
+
+class TagSearchResponse(BaseModel):
+    company_name: str

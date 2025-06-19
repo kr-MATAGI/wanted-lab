@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Request
+from typing import List
 
+from app.services import TagService
+from app.schemas import TagSearchResponse
 
 # Router
 router = APIRouter()
@@ -8,7 +11,7 @@ router = APIRouter()
 
 ### GET
 @router.get("/")
-async def search_tag_name(
+async def search_by_tag_name(
     query: str,
     request: Request,
 ):
@@ -26,3 +29,10 @@ async def search_tag_name(
     Returns:
         Dict[str, Any]: 검색된 결과
     """
+    tag_service: TagService = TagService()
+    results: List[str] = await tag_service.search_by_tag_name(
+        tag_name=query,
+        language=request.headers.get("x-wanted-language", "ko"),
+    )
+
+    return [TagSearchResponse(company_name=x) for x in results]

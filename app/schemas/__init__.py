@@ -4,7 +4,7 @@ from app.schemas.company_schema import (
     CompanyAddRequest,
     CompanyAddResponse,
 )
-from app.schemas.tag_schema import TagAddRequest, TagInfo
+from app.schemas.tag_schema import TagAddRequest, TagInfo, TagSearchResponse
 
 __all__ = [
     "SearchResponse",
@@ -12,5 +12,6 @@ __all__ = [
     "CompanyAddRequest",
     "CompanyAddResponse",
     "TagAddRequest",
+    "TagSearchResponse",
     "TagInfo",
 ]
