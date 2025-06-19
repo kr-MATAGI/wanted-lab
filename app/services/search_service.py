@@ -16,7 +16,6 @@ class SearchService:
         self,
         company_name: str,
         language: str,
-        auto_complete: bool=True,
     ):
         """
         회사명 자동완성
@@ -25,7 +24,6 @@ class SearchService:
         Args:
             - query (str): 검색할 회사명
             - language (str): 출력 언어
-            - auto_complete (bool): 자동완성 여부
         
         Returns:
             - List[str]: 검색된 회사명 리스트

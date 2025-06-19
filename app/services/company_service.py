@@ -66,6 +66,13 @@ class CompanyService:
     ):
         """
         회사명을 검색해서 해당 정보 모두 가져옴
+
+        Args:
+            - company_name (str): 검색할 회사명
+            - language (str): 출력 언어
+            
+        Returns:
+            - results (Dict[str, str]): 회사명과 태그 정보
         """
         results = {
             "company_name": "",
