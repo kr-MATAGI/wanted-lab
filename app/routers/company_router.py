@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Request
+import csv
+from fastapi import APIRouter, Request, UploadFile, File, HTTPException
 from typing import Dict, List
 
 from app.services import CompanyService
@@ -12,6 +13,15 @@ from app.schemas import (
 
 # Router
 router = APIRouter()
+
+# Global Variable
+ALLOWED_EXTENSIONS = {"csv"}
+
+def validate_file(file: UploadFile):
+    """
+    업로드된 파일이 허용되는지 검사
+    """
+    return file.filename.split(".")[-1] in ALLOWED_EXTENSIONS
 
 ### GET
 @router.get("/{company_name}")
@@ -44,6 +54,38 @@ async def get_company_info(
 
 
 ### POST
+@router.get("/upload")
+async def upload_company_from_csv(
+    file: UploadFile = File(...),
+):
+    """
+    CSV 파일 업로드를 통해 초기 회사 정보 추가
+    
+    Args:
+        pass
+    
+    Returns:
+        results (Dict[str, str]): 추가된 회사 개수
+    """        
+    
+    # 유효성 검사
+    if not validate_file(file):
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    
+    try:
+        file_path = f"./uploads/{file.filename}"
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    company_service: CompanyService = CompanyService()
+    results: Dict[str, str] = await company_service.add_company_from_csv(
+        file_path,
+    )
+    
+    return results
+
 @router.post("/")
 async def add_new_company(
     new_company_info: CompanyAddRequest,
