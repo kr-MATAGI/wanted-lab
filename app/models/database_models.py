@@ -34,7 +34,7 @@ class CompanyName(Base):
     """회사 정보 모델"""
     __tablename__ = "tbl_company_names"
     __table_args__ = (
-        UniqueConstraint('name', 'relation_id', name='tbl_company_names_name_rel_id_unique'),
+        UniqueConstraint('name', 'rel_id', name='tbl_company_names_name_rel_id_unique'),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -44,7 +44,11 @@ class CompanyName(Base):
         ForeignKey("tbl_company_ids.id"),
         nullable=False,
     )
-    relation_id = Column(Integer, nullable=False)
+    rel_id = Column(
+        Integer,
+        ForeignKey("tbl_company_name_relations.id"),
+        nullable=False,
+    )
     language_id = Column(
         Integer,
         ForeignKey("tbl_languages.id"),
@@ -55,6 +59,7 @@ class CompanyName(Base):
     # 관계 설정
     company = relationship("CompanyID", backref="company_names")
     language = relationship("Language", backref="company_names")
+    company_name_relation = relationship("CompanyNameRelation", backref="company_names")
 
 
 class CompanyNameRelation(Base):
@@ -78,13 +83,21 @@ class Tag(Base):
     """태그 정보 모델"""
     __tablename__ = "tbl_tags"
     __table_args__ = (
-        UniqueConstraint('tag_name', 'relation_id', name='tbl_tags_tag_name_rel_id_unique'),
+        UniqueConstraint('tag_name', 'rel_id', name='tbl_tags_tag_name_rel_id_unique'),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     tag_name = Column(Text, nullable=False)
-    relation_id = Column(Integer, nullable=False)
-    company_ids = Column(MutableList.as_mutable(ARRAY(Integer)), nullable=False)
+    rel_id = Column(
+        Integer,
+        ForeignKey("tbl_tag_relations.id"),
+        nullable=False,
+    )
+    company_id = Column(
+        Integer, 
+        ForeignKey("tbl_company_ids.id"),
+        nullable=False,
+    )
     language_id = Column(
         Integer, 
         ForeignKey("tbl_languages.id"),
@@ -92,7 +105,9 @@ class Tag(Base):
     add_date = Column(DateTime, nullable=False, default=func.now())
 
     # 관계 설정
+    company = relationship("CompanyID", backref="tags")
     language = relationship("Language", backref="tags")
+    tag_relation = relationship("TagRelation", backref="tags")
 
 
 class TagRelation(Base):
@@ -100,5 +115,13 @@ class TagRelation(Base):
     __tablename__ = "tbl_tag_relations"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+    company_id = Column(
+        Integer,
+        ForeignKey("tbl_company_ids.id"),
+        nullable=False
+    )
     tag_ids = Column(MutableList.as_mutable(ARRAY(Integer)), nullable=False)
     add_date = Column(DateTime, nullable=False, default=func.now())
+
+    # 관계 설정
+    company = relationship("CompanyID", backref="tag_relations")

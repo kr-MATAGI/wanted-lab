@@ -8,14 +8,11 @@ from app.utils import Parser
 from app.models import (
     CsvCompnay,
     CompanyID,
-    Language,
     CompanyName,
+    CompanyNameRelation,
+    Language,
     Tag,
-)
-from app.schemas import (
-    CompanyInfoResponse,
-    CompanyAddRequest,
-    TagInfo,
+    TagRelation, 
 )
 from app.utils import get_db, setup_logger
 
@@ -60,10 +57,20 @@ class CompanyService:
         Returns:
             - company_id (int): 새로운 회사 ID
         """
+        # tbl_company_ids 테이블에 새로운 회사 ID 추가
         company_id_obj = CompanyID()
         session.add(company_id_obj)
-        await session.flush() # ID를 먼저 받아놈
+        await session.flush() # id 먼저 받기
+
+        # tbl_company_name_relations 테이블에 새로운 회사 이름 관계 추가
+        tbl_company_name_relations = CompanyNameRelation(
+            name_ids=[],
+            company_id=company_id_obj.id,
+        )
+        session.add(tbl_company_name_relations)
+        await session.flush() # id 먼저 받기
         
+        # tbl_company_names 테이블에 새로운 회사 이름 추가
         for lang_type, name in new_companies.items():
             # Language ID 조회
             lang_id = await session.execute(
@@ -76,35 +83,24 @@ class CompanyService:
                 name=name,
                 company_id=company_id_obj.id,
                 language_id=lang_id,
+                rel_id=tbl_company_name_relations.id,
             )
             session.add(new_company_name)
+
+            # 관계 추가
+            tbl_company_name_relations.name_ids.append(new_company_name.id)
 
         if do_commit:
             await session.commit()
 
         return company_id_obj.id
     
-    def _convert_tag_list(
-        self,
-        tags: List[Dict[str, Dict]]
-    ) -> List[Tuple[str, str]]:
-        """
-        태그 리스트를 중복 제거 후 하나의 list로 변환 [ {tag_lang: taganame}, ... ]
-        """
-        all_tags: List[Dict[str, str]] = []
-        for tag_item in tags:
-            tag_name: Dict[str, str] = tag_item["tag_name"]
-            for lang, name in tag_name.items():
-                if {lang: name} not in all_tags:
-                    all_tags.append((lang, name))
-
-        return all_tags
 
     async def _add_new_tag(
         self,
         session,
         company_id: int,
-        new_tag: Tuple[str, str],
+        new_tag: Dict[str, str],
         do_commit: bool = True,
     ):
         """
@@ -114,26 +110,16 @@ class CompanyService:
             - session (AsyncSession): 데이터베이스 세션
             - new_tag (Dict[str, str]): 새로운 태그 정보
         """
-        
-        # 기존 태그가 검색되면 company_ids에 추가
-        lang_type, tag_name = new_tag[0], new_tag[1]
-        stmt = select(Tag).join(Language).where(
-            Tag.tag_name == tag_name,
-            Language.language_type == lang_type,
-            # Tag.language_id == Language.id,
+        # tbl_tab_realtions 정보 추가
+        tag_relations = TagRelation(
+            tag_ids=[],
+            company_id=company_id,
         )
-        results = await session.execute(stmt)
-        tag_obj = results.scalar_one_or_none()
+        session.add(tag_relations)
+        await session.flush() # id 먼저 받기
 
-        if tag_obj:
-            # company_ids에 존재하지 않는 경우 추가
-            if company_id not in tag_obj.company_ids:
-                tag_obj.company_ids.append(company_id)
-                logger.info(f"Update Tag - lang_type: {lang_type}, tag_name: {tag_name}, company_ids: {tag_obj.company_ids}")
-
-        else:
-            # 새롭게 추가
-            # Language ID 조회
+        # 새롭게 추가
+        for lang_type, tag_name in new_tag.items():
             lang_id = await session.execute(
                 select(Language).where(Language.language_type == lang_type)
             )
@@ -141,12 +127,15 @@ class CompanyService:
 
             new_tag_obj = Tag(
                 tag_name=tag_name,
-                company_ids=[company_id],
+                company_id=company_id,
+                rel_id=tag_relations.id,
                 language_id=lang_id,
             )
             session.add(new_tag_obj)
+            await session.flush() # id 먼저 받기
             
-            logger.info(f"Add New Tag - lang_type: {lang_type}, tag_name: {tag_name}, company_ids: {new_tag_obj.company_ids}")
+            # 관계 추가
+            tag_relations.tag_ids.append(new_tag_obj.id)
         
         if do_commit:
             await session.commit()
@@ -164,22 +153,23 @@ class CompanyService:
 
         db = get_db()
         try:
-            async for session in db:
-                for csv_item in csv_results:
-                    new_company: CompanyAddRequest = CompanyAddRequest(
-                        company_name={
-                            "ko": csv_item.company_ko,
-                            "en": csv_item.company_en,
-                            "ja": csv_item.company_ja,
-                        },
-                        tags=[
-                            csv_item.tag_ko,
-                            csv_item.tag_en,
-                            csv_item.tag_ja,
-                        ],
-                    )
+            pass 
+            # async for session in db:
+            #     for csv_item in csv_results:
+            #         new_company: Dict[str, Any] = (
+            #             company_name={
+            #                 "ko": csv_item.company_ko,
+            #                 "en": csv_item.company_en,
+            #                 "ja": csv_item.company_ja,
+            #             },
+            #             tags=[
+            #                 csv_item.tag_ko,
+            #                 csv_item.tag_en,
+            #                 csv_item.tag_ja,
+            #             ],
+            #         )
 
-                    await self.add_new_company(new_company, "ko")
+            #         await self.add_new_company(new_company, "ko")
         
         except Exception as e:
             raise e
@@ -291,26 +281,28 @@ class CompanyService:
                 )
 
                 # Tags
-                # 중복 제거 후 하나의 list로 변환 [ (tag_lang, taganame), ... ]
-                tags: List[Dict[str, Dict]] = self._convert_tag_list(new_company_info["tags"])
-                # 새로운 언어가 있는지 확인 후 추가
-                await self._add_new_language(
-                    session,
-                    input_languages=[x[0] for x in tags],
-                    do_commit=False,
-                )
-
+                tags: List[Dict[str, Dict]] = new_company_info.get("tags")
                 for tag_item in tags:
+                    tag_name_obj: Dict[str, str] = tag_item.get("tag_name")
+                    
+                    # 새로운 언어가 있는지 확인 후 추가
+                    await self._add_new_language(
+                        session,
+                        input_languages=list(tag_name_obj.keys()),
+                        do_commit=False,
+                    )
+
                     # 새로운 태그 추가
                     await self._add_new_tag(
                         session,
                         company_id=new_company_id,
-                        new_tag=tag_item,
+                        new_tag=tag_name_obj,
                         do_commit=False,
                     )
 
-                    if tag_item[0] == language:
-                        results["tags"].append(tag_item[1])
+                    for lang, tag_name in tag_item.items():
+                        if lang == language:
+                            results["tags"].append(tag_name)
 
                 # 최종 커밋
                 await session.commit()
@@ -327,10 +319,34 @@ class CompanyService:
     async def add_new_tag(
         self,
         compnay_name: str,
-        tags: List[TagInfo],
+        tags: List[Dict[str, str]],
         language: str,
     ):
-        pass
+        """
+        5. 회사 태그 정보 추가
+        - 저장 완료 후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
+        """
+        results: List[str] = []
+        db = get_db()
+        try:
+            async for session in db:
+                # 중복 제거 후 하나의 list로 변환 [ (tag_lang, taganame), ... ]
+                print(tags)
+                new_tags: List[Tuple[str, str]] = self._convert_tag_list(tags)
+
+                print(new_tags)
+
+        except Exception as e:
+            logger.error(f"[ERROR] add_new_tag: {e}")
+            raise e
+
+        finally:
+            await db.aclose()
+
+        return {
+            "company_name": compnay_name,
+            "tags": results,
+        }
 
     async def delete_tag(
         self,

@@ -126,7 +126,7 @@ async def add_new_company(
     """
 
     company_service: CompanyService = CompanyService()
-    add_results: Dict[str, str] = await company_service.add_new_company(
+    add_results: Dict[str, Any] = await company_service.add_new_company(
         new_company_info.model_dump(),
         language=request.headers.get("x-wanted-language", "tw"),
     )
@@ -154,13 +154,13 @@ async def add_new_tag(
         Dict[str, str]: 추가된 태그 정보
     """
     company_service: CompanyService = CompanyService()
-    results: Dict[str, str] = await company_service.add_new_tag(
+    results: Dict[str, Any] = await company_service.add_new_tag(
         company_name,
         tags,
         language=request.headers.get("x-wanted-language", "ko"),
     )
 
-    return results
+    return CompanyAddResponse(**results)
 
 
 ### DELETE
