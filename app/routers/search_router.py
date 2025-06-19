@@ -33,4 +33,4 @@ async def search_company_name(query: str, request: Request):
         wanted_lang,
     )
     
-    return [SearchResponse(**result) for result in search_results]
+    return [SearchResponse(company_name=item) for item in search_results]

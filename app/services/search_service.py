@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from typing import List, Dict
+from typing import List
 
 from app.utils import get_db, setup_logger
 from app.models import (
@@ -29,7 +29,7 @@ class SearchService:
             - List[str]: 검색된 회사명 리스트
         """
         db = get_db()
-        results: List[Dict[str, str]] = []
+        results: List[str] = []
         try:
             async for session in db:
                 stmt = select(
@@ -45,7 +45,7 @@ class SearchService:
 
                 for row in rows:
                     company_name_obj = row[0] # CompanyName 객체
-                    results.append({"company_name": company_name_obj.name})
+                    results.append(company_name_obj.name)
 
         except Exception as e:
             logger.error(f"[ERROR] search_company_name: {e}")
