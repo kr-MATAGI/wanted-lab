@@ -95,6 +95,11 @@ class CompanyService:
                 
                 db_results = await session.execute(stmt)
                 rows = db_results.all()
+
+                # 검색 결과가 없음 -> 404 Return
+                if not rows:
+                    return None
+
                 for row in rows:
                     company_name_obj = row[0]  # CompanyName 객체
                     tag_obj = row[1]  # Tag 객체

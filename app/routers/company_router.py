@@ -1,6 +1,5 @@
 import os
-import csv
-from fastapi import APIRouter, Request, UploadFile, File, HTTPException
+from fastapi import APIRouter, Request, UploadFile, File, HTTPException, status
 from typing import Dict, List, Any
 
 from app.services import CompanyService
@@ -54,6 +53,13 @@ async def get_company_info(
         company_name,
         language=request.headers.get("x-wanted-language", "ko"),
     )
+
+    # 검색 결과가 없음 -> 404 Return
+    if not company_info:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{company_name} information not found",
+        )
 
     return CompanyInfoResponse(**company_info)
 
