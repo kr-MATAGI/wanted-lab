@@ -1,0 +1,24 @@
+# WantedLab
+company_tag_sample.csv
+
+# Env
+venv/
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Temp File
+.DS_Store
+
+# FastAPI
+.pytest_cache/
+
+# Python
+__pycache__/
+.Python
