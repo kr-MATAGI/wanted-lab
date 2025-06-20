@@ -164,8 +164,8 @@ class CompanyService:
         """
             [
                 {
-                    "lang_id": string,
-                    "lang_type": int,
+                    "lang_id": int,
+                    "lang_type": string,
                     "company_id": integer,
                     "company_name": string,
                     "rel_id": integer,
@@ -198,17 +198,20 @@ class CompanyService:
         stmt = select(
             Tag,
             Language,
+            CompanyName,
         ).join(
             Language,
             Language.id == Tag.language_id,
         ).where(
             Tag.company_id == company_id,
+            CompanyName.company_id == company_id,
         )
         results = await session.execute(stmt)
         rows = results.all()
 
         """
         [
+            "compnay_name": string,
             "lang_id": integer,
             "lang_type": string,
             "tag_id": integer,
@@ -220,8 +223,10 @@ class CompanyService:
         for row in rows:
             tag_obj: Tag = row[0]
             language_obj: Language = row[1]
+            company_name_obj: CompanyName = row[2]
             
             tag_infos.append({
+                "company_name": company_name_obj.name,
                 "lang_id": language_obj.id,
                 "lang_type": language_obj.language_type,
                 "tag_id": tag_obj.id,
@@ -419,7 +424,10 @@ class CompanyService:
         """
         logger.debug(f"[DEBUG] add_new_tag: {compnay_name}, {tags}, {language}")
 
-        results: List[str] = []
+        results: Dict[str, Any] = {
+            "company_name": "",
+            "tags": [],
+        }
         db = get_db()
         try:
             async for session in db:
@@ -432,8 +440,8 @@ class CompanyService:
                 if not company_infos:
                     return None
                 
-                target_compnay_id: int = company_infos[0]["company_id"]
                 # 해당 회사의 company_id에 태그 추가
+                target_compnay_id: int = company_infos[0]["company_id"]
                 for tag_item in tags:
                     tag_name_obj: Dict[str, str] = tag_item.tag_name
                     
@@ -462,7 +470,9 @@ class CompanyService:
                 )
                 for tag_item in tag_infos:
                     if tag_item["lang_type"] == language:
-                        results.append(tag_item["tag_name"])                
+                        if not results["company_name"]:
+                            results["company_name"] = tag_item["company_name"]
+                        results["tags"].append(tag_item["tag_name"])
 
         except Exception as e:
             logger.error(f"[ERROR] add_new_tag: {e}")
@@ -471,11 +481,8 @@ class CompanyService:
         finally:
             await db.aclose()
 
-        results = list(set(results)) # 중복제거
-        return {
-            "company_name": compnay_name,
-            "tags": results,
-        }
+        results["tags"] = list(set(results["tags"])) # 중복제거
+        return results
 
     async def delete_tag(
         self,
@@ -483,4 +490,16 @@ class CompanyService:
         tag: str,
         language: str,
     ):
-        pass
+        """
+        6. 회사 태그 정보 삭제
+            - 저장 완료 후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
+        """
+        logger.debug(f"delete_tag: {compnay_name}, {tag}, {language}")
+
+        results: List[str] = []
+        db = get_db()
+
+
+        return {
+            "company_name": compnay_name,
+        }        

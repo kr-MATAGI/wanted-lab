@@ -188,4 +188,4 @@ async def delete_tag(
         language=request.headers.get("x-wanted-language", "ko"),
     )
 
-    return results
+    return CompanyAddResponse(**results)
