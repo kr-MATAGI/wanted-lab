@@ -1,11 +1,11 @@
-# wanted-lab
-시니어 파이썬 개발자 채용 과제
-
 # Wantedlab API
 
-FastAPI 기반의 회사 및 태그 관리 API 서비스입니다.
+시니어 파이썬 개발자 채용 과제
 
 ## DB 설계
+
+<h3>dump.sql 파일에 csv 내 기본 데이터가 삽입되어 있습니다.</h3>
+
 ![wanted_lab_db_img](https://github.com/user-attachments/assets/3a0bed4d-838f-4a25-9628-acb66b351154)
 
 
@@ -19,8 +19,7 @@ FastAPI 기반의 회사 및 태그 관리 API 서비스입니다.
 
 1. **저장소 클론**
 ```bash
-git clone <repository-url>
-cd wanted-lab
+git clone https://github.com/kr-MATAGI/wanted-lab.git
 ```
 
 2. **Docker Compose로 서비스 시작**
@@ -28,19 +27,14 @@ cd wanted-lab
 docker-compose up -d
 ```
 
-3. **서비스 상태 확인**
+3. **서비스 관리**
 ```bash
-docker-compose ps
+docker-compose down
 ```
 
-4. **로그 확인**
+4. **서비스 재시작**
 ```bash
-# 전체 로그
-docker-compose logs
-
-# 특정 서비스 로그
-docker-compose logs app
-docker-compose logs postgres
+docker-compose restart
 ```
 
 ### 서비스 접속 정보
@@ -52,22 +46,6 @@ docker-compose logs postgres
   - 사용자: postgres
   - 비밀번호: postgres
 
-### 서비스 관리
-
-```bash
-# 서비스 중지
-docker-compose down
-
-# 서비스 중지 및 볼륨 삭제
-docker-compose down -v
-
-# 서비스 재시작
-docker-compose restart
-
-# 특정 서비스만 재시작
-docker-compose restart app
-```
-
 ## 📝 API 사용법
 
 ### 헤더 설정
@@ -75,13 +53,6 @@ docker-compose restart app
 ```
 x-wanted-language: ko
 ```
-
-### 주요 엔드포인트
-
-- `GET /companies/{company_name}` - 회사 정보 조회
-- `POST /companies/` - 새 회사 등록
-- `PUT /companies/{company_name}/tags` - 회사 태그 추가
-- `DELETE /companies/{company_name}/tags/{tag}` - 회사 태그 삭제
 
 ## 🔧 개발 환경
 
@@ -99,9 +70,14 @@ pip install -r requirements.txt
 ```
 
 3. **환경 변수 설정**
-```bash
-cp .env.dev.example .env.dev
-# .env.dev 파일에서 데이터베이스 설정 수정
+```yaml
+# .env.dev
+DB_HOST="localhost"
+DB_PORT=5432
+DB_USER="postgres"
+DB_PASSWORD="postgres"
+DB_NAME="wantedlab"
+DB_ECHO=False
 ```
 
 4. **애플리케이션 실행**
@@ -110,6 +86,11 @@ uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 ```
 
 ## 🧪 테스트
+ - 제공해주신 pytest의 json.loads(...) 대신 resp.json()을 사용했습니다.
+```python
+json.loads(resp.data.decode("utf-8")) # Flask
+resp.json() # FastAPI
+```
 
 ```bash
 # 전체 테스트 실행
@@ -117,4 +98,7 @@ pytest
 
 # 특정 테스트 파일 실행
 pytest tests/test_parse_csv.py
+
+# 테스트 파일의 특정 함수만 실행
+pytest tests/test_senior_app.py::test_company_name_autocomplete
 ```
