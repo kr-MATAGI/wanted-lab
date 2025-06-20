@@ -267,6 +267,15 @@ class CompanyService:
         tag_relation_obj: TagRelation = results.scalar_one()
         tag_relation_obj.tag_ids.remove(tag_id)
 
+        # 만약 tag_ids가 비어있다면 row 삭제
+        if not tag_relation_obj.tag_ids:
+            stmt = delete(
+                TagRelation,
+            ).where(
+                TagRelation.id == tag_rel_id
+            )
+            await session.execute(stmt)
+
         if do_commit:
             await session.commit()
 
