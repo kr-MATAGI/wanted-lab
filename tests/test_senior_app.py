@@ -1,7 +1,7 @@
 import pytest
 import json
 
-from app import app
+from app.main import app
 
 
 @pytest.fixture
@@ -14,9 +14,13 @@ def test_company_name_autocomplete(api):
     1. 회사명 자동완성
     회사명의 일부만 들어가도 검색이 되어야 합니다.
     header의 x-wanted-language 언어값에 따라 해당 언어로 출력되어야 합니다.
+
+    pytest tests/test_senior_app.py::test_company_name_autocomplete
+
     """
     resp = api.get("/search?query=링크", headers=[("x-wanted-language", "ko")])
-    searched_companies = json.loads(resp.data.decode("utf-8"))
+    # searched_companies = json.loads(resp.data.decode("utf-8")) # Flask
+    searched_companies = resp.json() # FastAPI
 
     assert resp.status_code == 200
     assert searched_companies == [
@@ -29,15 +33,20 @@ def test_company_search(api):
     """
     2. 회사 이름으로 회사 검색
     header의 x-wanted-language 언어값에 따라 해당 언어로 출력되어야 합니다.
+
+    pytest tests/test_senior_app.py::test_company_search
     """
     resp = api.get(
         "/companies/Wantedlab", headers=[("x-wanted-language", "ko")]
     )
 
-    company = json.loads(resp.data.decode("utf-8"))
+    # company = json.loads(resp.data.decode("utf-8")) # Flask
+    company = resp.json() # FastAPI
+    print(company)
+
     assert resp.status_code == 200
     assert company == {
-        "company_name": "원티드랩",
+        "company_name": "원티드랩", # 원래 없는 데이터 (추가 필요)
         "tags": [
             "태그_4",
             "태그_20",
@@ -58,6 +67,8 @@ def test_new_company(api):
     3.  새로운 회사 추가
     새로운 언어(tw)도 같이 추가 될 수 있습니다.
     저장 완료후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력되어야 합니다.
+
+    pytest tests/test_senior_app.py::test_new_company
     """
     resp = api.post(
         "/companies",
@@ -94,7 +105,9 @@ def test_new_company(api):
         headers=[("x-wanted-language", "tw")],
     )
 
-    company = json.loads(resp.data.decode("utf-8"))
+    # company = json.loads(resp.data.decode("utf-8")) # Flask
+    company = resp.json() # FastAPI
+
     assert company == {
         "company_name": "LINE FRESH",
         "tags": [
@@ -113,9 +126,12 @@ def test_search_tag_name(api):
     일본어 태그로 검색을 해도 language가 ko이면 한국 회사명이 노출이 되어야 합니다.
     ko언어가 없을경우 노출가능한 언어로 출력합니다.
     동일한 회사는 한번만 노출이 되어야합니다.
+
+    pytest tests/test_senior_app.py::test_search_tag_name
     """
     resp = api.get("/tags?query=タグ_22", headers=[("x-wanted-language", "ko")])
-    searched_companies = json.loads(resp.data.decode("utf-8"))
+    # searched_companies = json.loads(resp.data.decode("utf-8")) # Flask
+    searched_companies = resp.json() # FastAPI
 
     assert [company["company_name"] for company in searched_companies] == [
         "딤딤섬 대구점",
@@ -130,6 +146,8 @@ def test_new_tag(api):
     """
     5.  회사 태그 정보 추가
     저장 완료후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력되어야 합니다.
+
+    pytest tests/test_senior_app.py::test_new_tag
     """
     resp = api.put(
         "/companies/원티드랩/tags",
@@ -152,7 +170,10 @@ def test_new_tag(api):
         headers=[("x-wanted-language", "en")],
     )
 
-    company = json.loads(resp.data.decode("utf-8"))
+    # company = json.loads(resp.data.decode("utf-8")) # Flask
+    company = resp.json() # FastAPI
+    print(company)
+
     assert company == {
         "company_name": "Wantedlab",
         "tags": [
@@ -168,13 +189,18 @@ def test_delete_tag(api):
     """
     6.  회사 태그 정보 삭제
     저장 완료후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력되어야 합니다.
+
+    pytest tests/test_senior_app.py::test_delete_tag
     """
     resp = api.delete(
         "/companies/원티드랩/tags/태그_16",
         headers=[("x-wanted-language", "en")],
     )
 
-    company = json.loads(resp.data.decode("utf-8"))
+    # company = json.loads(resp.data.decode("utf-8")) # Flask
+    company = resp.json() # FastAPI
+    print(company)
+    
     assert company == {
         "company_name": "Wantedlab",
         "tags": [
