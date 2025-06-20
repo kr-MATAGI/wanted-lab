@@ -42,7 +42,6 @@ def test_company_search(api):
 
     # company = json.loads(resp.data.decode("utf-8")) # Flask
     company = resp.json() # FastAPI
-    print(company)
 
     assert resp.status_code == 200
     assert company == {
@@ -53,6 +52,10 @@ def test_company_search(api):
             "태그_16",
         ],
     }
+
+    '''
+    테스트 2개 동시에 진행하면 오류 발생
+    '''
 
     # 검색된 회사가 없는경우 404를 리턴합니다.
     resp = api.get(
@@ -74,46 +77,47 @@ def test_new_company(api):
         "/companies",
         json={
             "company_name": {
-                "ko": "라인 프레쉬",
-                "tw": "LINE FRESH",
-                "en": "LINE FRESH",
+                "ko": "최재훈",
+                "en": "MATAGI",
             },
             "tags": [
                 {
                     "tag_name": {
-                        "ko": "태그_1",
-                        "tw": "tag_1",
-                        "en": "tag_1",
+                        "ko": "태그_4",
+                        "tw": "tag_4",
+                        "en": "tag_4",
                     }
                 },
                 {
                     "tag_name": {
-                        "ko": "태그_8",
-                        "tw": "tag_8",
-                        "en": "tag_8",
+                        "ko": "태그_20",
+                        "tw": "tag_20",
+                        "en": "tag_20",
                     }
                 },
                 {
                     "tag_name": {
-                        "ko": "태그_15",
-                        "tw": "tag_15",
-                        "en": "tag_15",
+                        "ko": "태그_16",
+                        "tw": "tag_16",
+                        "en": "tag_16",
                     }
                 }
             ]
         },
-        headers=[("x-wanted-language", "tw")],
+        headers=[("x-wanted-language", "en")],
     )
 
     # company = json.loads(resp.data.decode("utf-8")) # Flask
     company = resp.json() # FastAPI
+    print(company)
 
+    assert resp.status_code == 200
     assert company == {
-        "company_name": "LINE FRESH",
+        "company_name": "MATAGI",
         "tags": [
-            "tag_1",
-            "tag_8",
-            "tag_15",
+            "tag_4",
+            "tag_20",
+            "tag_16",
         ],
     }
 
