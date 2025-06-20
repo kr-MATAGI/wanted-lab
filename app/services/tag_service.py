@@ -1,5 +1,5 @@
 from typing import List, Dict
-from sqlalchemy import select, any_
+from sqlalchemy import select
 
 from app.utils import get_db, setup_logger
 from app.models import (
@@ -18,7 +18,7 @@ class TagService:
         language: str,
     ):
         """
-        태그명으로 회사이름 검색
+        4. 태그명으로 회사이름 검색
             - 태그로 검색 관련된 회사가 검색되어야 한다.
             - 다국어로 검색 가능
             - 일본어 태그 검색 해도 x-wanted-language 언어값에 따라 해당 언어로 출력
@@ -45,7 +45,10 @@ class TagService:
                     Language,
                 ).join(
                     CompanyName,
-                    CompanyName.id == any_(Tag.company_ids)
+                    CompanyName.company_id == Tag.company_id
+                ).join(
+                    Language,
+                    Language.id == Tag.language_id
                 ).where(
                     Tag.tag_name == tag_name
                 )
@@ -66,14 +69,12 @@ class TagService:
                     else:    
                         company_infos[language_obj.language_type].append(company_name_obj.name)
 
-                
                 # 출력 언어에 따라 결과 만들기 (없다면 가능한 언어로)
                 if company_infos.get(language):
                     results = company_infos[language]
-                    print(company_infos[language])
                 else:
                     for key, val in company_infos.items():
-                        if not val:
+                        if val:
                             results = company_infos[key]
                             break
 
