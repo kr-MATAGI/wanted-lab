@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, status
+from fastapi.responses import JSONResponse
 from typing import List, Dict
 
 from app.services import SearchService
@@ -9,7 +10,7 @@ router = APIRouter()
 
 
 ### GET
-@router.get("/query")
+@router.get("/")
 async def search_company_name(query: str, request: Request):
     """
     🔍 회사명 자동완성 API
@@ -31,7 +32,7 @@ async def search_company_name(query: str, request: Request):
     ---
     **Example Request**
     ```http
-    GET /query?query=원티드
+    GET /search?query=원티드
     x-wanted-language: ko
     ```
 
@@ -51,3 +52,4 @@ async def search_company_name(query: str, request: Request):
     )
     
     return [SearchResponse(company_name=item) for item in search_results]
+  

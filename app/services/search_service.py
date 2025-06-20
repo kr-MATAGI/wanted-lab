@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from typing import List
 
+from app.repositories import SearchRepository
 from app.utils import get_db, setup_logger
 from app.models import (
     CompanyName,
@@ -28,33 +29,9 @@ class SearchService:
         Returns:
             - List[str]: 검색된 회사명 리스트
         """
-        db = get_db()
-        results: List[str] = []
-        try:
-            async for session in db:
-                stmt = select(
-                    CompanyName,
-                    Language,
-                ).join(
-                    Language,
-                    Language.id == CompanyName.language_id,
-                ).where(
-                    Language.language_type == language,
-                    CompanyName.name.like(f"%{company_name}%"),
-                )
-
-                db_results = await session.execute(stmt)
-                rows = db_results.all()
-
-                for row in rows:
-                    company_name_obj = row[0] # CompanyName 객체
-                    results.append(company_name_obj.name)
-
-        except Exception as e:
-            logger.error(f"[ERROR] search_company_name: {e}")
-            raise e
-        
-        finally:
-            await db.aclose()
-
+        search_repository = SearchRepository()
+        results = await search_repository.search_company_name(
+            company_name=company_name,
+            language=language,
+        )
         return results

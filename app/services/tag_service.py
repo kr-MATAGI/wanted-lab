@@ -1,6 +1,7 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 from sqlalchemy import select
 
+from app.repositories import TagRepository
 from app.utils import get_db, setup_logger
 from app.models import (
     CompanyName,
@@ -33,60 +34,27 @@ class TagService:
             - List[str]: 검색된 회사이름 리스트
         """
 
-        db = get_db()
+        tag_repository = TagRepository()
+
+        # Tag명에 연관된 회사 id 조회
+        company_ids: List[int] = await tag_repository.get_company_id_by_tag_name(
+            tag_name=tag_name,
+        )
+
+        # 회사 id를 통해 회사 정보 조회
+        company_names: Dict[int, Any] = await tag_repository.get_company_name_by_company_id(
+            company_ids=company_ids,
+        )
+        
+        # 결과 반환
         results: List[str] = []
-
-        try:
-            async for session in db:
-                # 태그 검색
-                stmt = select(
-                    Tag,
-                    CompanyName,
-                    Language,
-                ).join(
-                    CompanyName,
-                    CompanyName.company_id == Tag.company_id
-                ).join(
-                    Language,
-                    Language.id == Tag.language_id
-                ).where(
-                    Tag.tag_name == tag_name
-                )
-
-                db_results = await session.execute(stmt)
-                rows = db_results.all()
-
-                # 언어에 따라 회사명 정리
-                company_infos: Dict[str, List[str]] = {}
-
-                for row in rows:
-                    # tag_obj: Tag = row[0] # Not Used
-                    company_name_obj: CompanyName = row[1]
-                    language_obj: Language = row[2]
-
-                    if language_obj.language_type not in company_infos.keys():
-                        company_infos[language_obj.language_type] = [company_name_obj.name]
-                    else:    
-                        company_infos[language_obj.language_type].append(company_name_obj.name)
-
-                # 출력 언어에 따라 결과 만들기 (없다면 가능한 언어로)
-                if company_infos.get(language):
-                    results = company_infos[language]
-                else:
-                    for key, val in company_infos.items():
-                        if val:
-                            results = company_infos[key]
-                            break
-
-                # 결과 중복제거
-                results = list(set(results))
-
-        except Exception as e:
-            logger.error(f"[ERROR] search_by_tag_name: {e}")
-            raise e
-
-        finally:
-            await db.aclose()
-
+        for cmpany_id, company_names in company_names.items():
+            if language in company_names.keys():
+                results.append(company_names[language])
+            else:
+                for key, val in company_names.items():
+                    if val:
+                        results.append(val)
+                        break
 
         return results

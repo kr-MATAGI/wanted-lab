@@ -65,7 +65,7 @@ async def get_company_info(
     """
     company_service: CompanyService = CompanyService()
     company_info: Dict[str, Any] = await company_service.get_company_info(
-        company_name,
+        company_name=company_name,
         language=request.headers.get("x-wanted-language"),
     )
 
@@ -75,7 +75,7 @@ async def get_company_info(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"{company_name} information not found",
         )
-
+    
     return CompanyInfoResponse(**company_info)
 
 
