@@ -50,6 +50,9 @@ docker-compose restart
 
 ### 헤더 설정
 모든 API 요청 시 다음 헤더를 포함해야 합니다:
+
+**/docs** 에서는 Parameter로 받게 해두었습니다.
+
 ```
 x-wanted-language: ko
 ```
