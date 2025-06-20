@@ -5,6 +5,10 @@
 
 FastAPI 기반의 회사 및 태그 관리 API 서비스입니다.
 
+## DB 설계
+![wanted_lab_db_img](https://github.com/user-attachments/assets/3a0bed4d-838f-4a25-9628-acb66b351154)
+
+
 ## 🚀 Docker 배포
 
 ### 사전 요구사항
