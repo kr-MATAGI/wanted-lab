@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
 from sqlalchemy import select, delete
+from sqlalchemy.exc import IntegrityError
 
 from app.utils import get_db, setup_logger
 from app.models import (
@@ -184,6 +185,7 @@ class CompanyRepository:
                 for lang in new_languages:
                     new_language = Language(language_type=lang)
                     session.add(new_language)
+                    await session.flush()
 
                 await session.commit()
             
@@ -269,22 +271,29 @@ class CompanyRepository:
 
                 # 새롭게 추가
                 for lang_type, tag_name in new_tag.items():
-                    lang_id = await session.execute(
-                        select(Language).where(Language.language_type == lang_type)
-                    )
-                    lang_id = lang_id.scalar_one().id
+                    try:
+                        lang_id = await session.execute(
+                            select(Language).where(Language.language_type == lang_type)
+                        )
+                        lang_id = lang_id.scalar_one().id
 
-                    new_tag_obj = Tag(
-                        tag_name=tag_name,
-                        company_id=company_id,
-                        rel_id=tag_relations.id,
-                        language_id=lang_id,
-                    )
-                    session.add(new_tag_obj)
-                    await session.flush() # id 먼저 받기
-                    
-                    # 관계 추가
-                    tag_relations.tag_ids.append(new_tag_obj.id)
+                        new_tag_obj = Tag(
+                            tag_name=tag_name,
+                            company_id=company_id,
+                            rel_id=tag_relations.id,
+                            language_id=lang_id,
+                        )
+                        session.add(new_tag_obj)
+                        await session.flush() # id 먼저 받기
+
+                        # 관계 추가
+                        tag_relations.tag_ids.append(new_tag_obj.id)
+
+                    except IntegrityError as e:
+                        # 중복 태그인 경우 건너뛰기
+                        logger.info(f"Tag already exists: {tag_name} for company {company_id} in language {lang_type}")
+                        await session.rollback()
+                        continue
 
                 await session.commit()
             
@@ -345,7 +354,7 @@ class CompanyRepository:
                     Tag.company_id == company_id,
                 )
                 results = await session.execute(stmt)
-                tag_relation_id = results.scalar_one()
+                tag_relation_id = results.scalar_one_or_none()
 
         except Exception as e:
             logger.error(f"[ERROR] get_tag_relation_id: {e}")
