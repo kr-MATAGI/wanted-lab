@@ -47,6 +47,7 @@ class CompanyRepository:
         return company_id
     
     async def get_company_info(
+        self,
         company_name: str,
     ):
         """
@@ -79,8 +80,6 @@ class CompanyRepository:
                 results = await session.execute(stmt)
                 rows = results.all()
 
-                
-                company_infos: List[Dict[str, str]] = []
                 for row in rows:
                     company_obj: CompanyName = row[0]
                     language_obj: Language = row[1]
@@ -310,7 +309,7 @@ class CompanyRepository:
                 stmt = delete(
                     Tag,
                 ).where(
-                    Tag.id == tag_id,
+                    Tag.rel_id == tag_rel_id,
                 )
                 await session.execute(stmt)
 
@@ -350,7 +349,8 @@ class CompanyRepository:
         Returns:
         [
             {
-                "compnay_name": string,
+                "company_name": string,
+                "company_lang_id": integer,
                 "lang_id": integer,
                 "lang_type": string,
                 "tag_id": integer,
@@ -369,6 +369,9 @@ class CompanyRepository:
                 ).join(
                     Language,
                     Language.id == Tag.language_id,
+                ).join(
+                    CompanyName,
+                    CompanyName.company_id == Tag.company_id,
                 ).where(
                     Tag.company_id == company_id,
                     CompanyName.company_id == company_id,
@@ -383,6 +386,7 @@ class CompanyRepository:
                     
                     tag_infos.append({
                         "company_name": company_name_obj.name,
+                        "company_lang_id": company_name_obj.language_id,
                         "lang_id": language_obj.id,
                         "lang_type": language_obj.language_type,
                         "tag_id": tag_obj.id,

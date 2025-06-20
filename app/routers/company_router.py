@@ -226,7 +226,7 @@ async def add_new_tag(
 ### DELETE
 @router.delete("/{company_name}/tags/{tag}")
 async def delete_tag(
-    compnay_name: str,
+    company_name: str,
     tag: str,
     request: Request,
 ):
@@ -253,7 +253,7 @@ async def delete_tag(
     ---
     **Example Request**
     ```http
-    DELETE /원티드랩/tags/태그_16
+    DELETE /companies/원티드랩/tags/태그_16
     x-wanted-language: en
     ```
 
@@ -273,11 +273,18 @@ async def delete_tag(
       - **404 Not Found**:  
         해당 회사 또는 태그가 존재하지 않는 경우
     """
+    
     company_service: CompanyService = CompanyService()
     results = await company_service.delete_tag(
-        compnay_name,
+        company_name,
         tag,
         language=request.headers.get("x-wanted-language"),
     )
+
+    if not results:
+      raise HTTPException(
+          status_code=status.HTTP_404_NOT_FOUND,
+          detail="information not found",
+      )
 
     return CompanyAddResponse(**results)

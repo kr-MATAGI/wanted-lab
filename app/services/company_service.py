@@ -117,8 +117,6 @@ class CompanyService:
         5. 회사 태그 정보 추가
             - 저장 완료 후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
         """
-        logger.debug(f"[DEBUG] add_new_tag: {company_name}, {tags}, {language}")
-
         results: Dict[str, Any] = {
             "company_name": "",
             "tags": [],
@@ -151,21 +149,23 @@ class CompanyService:
             )
 
             # compay_id, language에 따른 tag 결과 출력
-            tag_infos: List[Dict[str, Any]] = await self._get_tag_info(
+            tag_infos: List[Dict[str, Any]] = await company_repository.get_tag_info(
                 company_id=target_compnay_id,
             )
+
             for tag_item in tag_infos:
                 if tag_item["lang_type"] == language:
                     if not results["company_name"]:
                         results["company_name"] = tag_item["company_name"]
-                    results["tags"].append(tag_item["tag_name"])
+                    
+                    if tag_item["tag_name"] not in results["tags"]:
+                        results["tags"].append(tag_item["tag_name"])
 
-        results["tags"] = list(set(results["tags"])) # 중복제거
         return results
 
     async def delete_tag(
         self,
-        compnay_name: str,
+        company_name: str,
         tag: str,
         language: str,
     ):
@@ -173,26 +173,22 @@ class CompanyService:
         6. 회사 태그 정보 삭제
             - 저장 완료 후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
         """
-        logger.debug(f"delete_tag: {compnay_name}, {tag}, {language}")
-
         results: Dict[str, Any] = {
             "company_name": "",
             "tags": [],
         }
 
         company_repository: CompanyRepository = CompanyRepository()
-        
-        compnay_infos: List[Dict[str, Any]] = await company_repository.get_company_info(
-            compnay_name,
-        )
 
-        if not compnay_infos:
+        compnay_id: int = await company_repository.get_company_id_by_company_name(
+            company_name=company_name,
+        )
+        if not compnay_id:
             return None
 
         # 회사 id를 통해 태그 정보 조회
-        target_compnay_id: int = compnay_infos[0]["company_id"]
         tag_infos = await company_repository.get_tag_info(
-            company_id=target_compnay_id,
+            company_id=compnay_id,
         )
 
         delete_tag_ids: List[int] = []
@@ -209,19 +205,22 @@ class CompanyService:
                 tag_rel_id=rel_id,
             )
             logger.debug(f"delete_tag_info: tag_id: {tag_id}, rel_id: {rel_id}")
-        
+    
 
         # 최종 결과 반환
         tag_infos = await company_repository.get_tag_info(
-            company_id=target_compnay_id,
+            company_id=compnay_id,
         )
 
         for tag_item in tag_infos:
             if tag_item["lang_type"] == language:
-                if not results["company_name"]:
+                if (
+                    not results["company_name"] 
+                    and tag_item["company_lang_id"] == tag_item["lang_id"]
+                ):
                     results["company_name"] = tag_item["company_name"]
-                results["tags"].append(tag_item["tag_name"])
-    
 
-        results["tags"] = list(set(results["tags"])) # 중복제거
+                if tag_item["tag_name"] not in results["tags"]:
+                    results["tags"].append(tag_item["tag_name"])
+
         return results
