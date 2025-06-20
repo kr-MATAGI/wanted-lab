@@ -1,8 +1,7 @@
 from fastapi import UploadFile
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 
-from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy import select, delete
 
 from app.utils import Parser
 from app.models import (
@@ -236,6 +235,40 @@ class CompanyService:
 
         return tag_infos
     
+
+    async def _delete_tag_info(
+        self,
+        session,
+        tag_id: int,
+        tag_rel_id: int,
+        do_commit: bool = True
+    ):
+        """
+        태그 정보 삭제
+            - tag_id, tag_rel_id를 기반으로 삭제
+            - tbl_tags, tbl_tag_relations 에서 삭제
+        """
+
+        # tbl_tags
+        stmt = delete(
+            Tag,
+        ).where(
+            Tag.id == tag_id,
+        )
+        await session.execute(stmt)
+
+        # tbl_tag_relations -> tag_ids에서 삭제
+        stmt = select(
+            TagRelation,
+        ).where(
+            TagRelation.id == tag_rel_id,
+        )
+        results = await session.execute(stmt)
+        tag_relation_obj: TagRelation = results.scalar_one()
+        tag_relation_obj.tag_ids.remove(tag_id)
+
+        if do_commit:
+            await session.commit()
 
     async def add_company_from_csv(
         self,
@@ -496,10 +529,64 @@ class CompanyService:
         """
         logger.debug(f"delete_tag: {compnay_name}, {tag}, {language}")
 
-        results: List[str] = []
+        results: Dict[str, Any] = {
+            "company_name": "",
+            "tags": [],
+        }
+
         db = get_db()
+        try:
+            async for session in db:
+                compnay_infos: List[Dict[str, Any]] = await self._get_compnay_info(
+                    session,
+                    compnay_name,
+                )
 
+                if not compnay_infos:
+                    return None
 
-        return {
-            "company_name": compnay_name,
-        }        
+                # 회사 id를 통해 태그 정보 조회
+                target_compnay_id: int = compnay_infos[0]["company_id"]
+                tag_infos = await self._get_tag_info(
+                    session,
+                    company_id=target_compnay_id,
+                )
+                delete_tag_ids: List[int] = []
+                for tag_item in tag_infos:
+                    if tag_item["tag_name"] == tag:
+                        delete_tag_ids.append((tag_item["tag_id"], tag_item["rel_id"]))
+                delete_tag_ids = list(set(delete_tag_ids))
+
+                # tag_name이 일치하면 tag_id를 기반으로 삭제
+                # tag_realtions 도 삭제
+                for tag_id, rel_id in delete_tag_ids:
+                    await self._delete_tag_info(
+                        session,
+                        tag_id=tag_id,
+                        tag_rel_id=rel_id,
+                        do_commit=False,
+                    )
+                    logger.debug(f"delete_tag_info: tag_id: {tag_id}, rel_id: {rel_id}")
+                
+                # 최종 커밋
+                await session.commit()
+
+                # 최종 결과 반환
+                tag_infos = await self._get_tag_info(
+                    session,
+                    company_id=target_compnay_id,
+                )
+                for tag_item in tag_infos:
+                    if tag_item["lang_type"] == language:
+                        if not results["company_name"]:
+                            results["company_name"] = tag_item["company_name"]
+                        results["tags"].append(tag_item["tag_name"])
+    
+        except Exception as e:
+            logger.error(f"[ERROR] delete_tag: {e}")
+        
+        finally:
+            await db.aclose()
+
+        results["tags"] = list(set(results["tags"])) # 중복제거
+        return results
