@@ -51,7 +51,7 @@ async def search_by_tag_name(
 
     **Notes**
       - 일본어 태그로 검색해도, 응답은 영어(혹은 원하는 언어)로 반환
-      - 회사명(ko)이 없는 경우, 노출 가능한 다른 언어명으로 응답
+      - 지정한 언어가 없는 경우, 노출 가능한 다른 언어명으로 응답
     """
     tag_service: TagService = TagService()
     results: List[str] = await tag_service.search_by_tag_name(
