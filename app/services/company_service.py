@@ -213,7 +213,6 @@ class CompanyService:
         if not results["company_name"] and language in company_infos["company_name"].keys():
             results["company_name"] = company_infos["company_name"][language]
 
-        print(company_infos["tags"])
         for tag_item in company_infos["tags"]:
             if language in tag_item.keys() and tag_item.get(language) not in results["tags"]:
                 results["tags"].append(tag_item.get(language))
