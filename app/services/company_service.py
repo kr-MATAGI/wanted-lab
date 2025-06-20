@@ -141,6 +141,96 @@ class CompanyService:
         if do_commit:
             await session.commit()
         
+    async def _get_compnay_info(
+        self,
+        session,
+        compnay_name: str,
+    ):
+        """
+        회사 이름을 통해 정보 가져오기
+        """
+        stmt = select(
+            CompanyName,
+            Language,
+        ).join(
+            Language,
+            Language.id == CompanyName.language_id,
+        ).where(
+            CompanyName.name == compnay_name,
+        )
+        results = await session.execute(stmt)
+        rows = results.all()
+
+        """
+            [
+                {
+                    "lang_id": string,
+                    "lang_type": int,
+                    "company_id": integer,
+                    "company_name": string,
+                    "rel_id": integer,
+                }, ...
+            ]
+        """
+        company_infos: List[Dict[str, str]] = []
+        for row in rows:
+            company_obj: CompanyName = row[0]
+            language_obj: Language = row[1]
+
+            company_infos.append({
+                "lang_id": language_obj.id,
+                "lang_type": language_obj.language_type,
+                "company_id": company_obj.company_id,
+                "company_name": company_obj.name,
+                "rel_id": company_obj.rel_id,
+            })
+        
+        return company_infos
+    
+    async def _get_tag_info(
+        self,
+        session,
+        company_id: int,
+    ):
+        """
+        회사 ID를 통해 태그 정보 가져오기
+        """
+        stmt = select(
+            Tag,
+            Language,
+        ).join(
+            Language,
+            Language.id == Tag.language_id,
+        ).where(
+            Tag.company_id == company_id,
+        )
+        results = await session.execute(stmt)
+        rows = results.all()
+
+        """
+        [
+            "lang_id": integer,
+            "lang_type": string,
+            "tag_id": integer,
+            "tag_name": string,
+            "rel_id": integer,
+        ]   
+        """
+        tag_infos: List[Dict[str, Any]] = []
+        for row in rows:
+            tag_obj: Tag = row[0]
+            language_obj: Language = row[1]
+            
+            tag_infos.append({
+                "lang_id": language_obj.id,
+                "lang_type": language_obj.language_type,
+                "tag_id": tag_obj.id,
+                "tag_name": tag_obj.tag_name,
+                "rel_id": tag_obj.rel_id,
+            })
+
+        return tag_infos
+    
 
     async def add_company_from_csv(
         self,
@@ -325,17 +415,54 @@ class CompanyService:
     ):
         """
         5. 회사 태그 정보 추가
-        - 저장 완료 후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
+            - 저장 완료 후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
         """
+        logger.debug(f"[DEBUG] add_new_tag: {compnay_name}, {tags}, {language}")
+
         results: List[str] = []
         db = get_db()
         try:
             async for session in db:
-                # 중복 제거 후 하나의 list로 변환 [ (tag_lang, taganame), ... ]
-                print(tags)
-                new_tags: List[Tuple[str, str]] = self._convert_tag_list(tags)
+                # 회사 존재하는 지 확인
+                company_infos = await self._get_compnay_info(
+                    session,
+                    compnay_name,
+                )
+                
+                if not company_infos:
+                    return None
+                
+                target_compnay_id: int = company_infos[0]["company_id"]
+                # 해당 회사의 company_id에 태그 추가
+                for tag_item in tags:
+                    tag_name_obj: Dict[str, str] = tag_item.tag_name
+                    
+                    # 새로운 언어가 있는지 확인 후 추가
+                    await self._add_new_language(
+                        session,
+                        input_languages=list(tag_name_obj.keys()),
+                        do_commit=False,
+                    )
 
-                print(new_tags)
+                    # 새로운 태그 추가
+                    await self._add_new_tag(
+                        session,
+                        company_id=target_compnay_id,
+                        new_tag=tag_name_obj,
+                        do_commit=False,
+                    )
+                
+                # 최종 커밋
+                await session.commit()
+
+                # compay_id, language에 따른 tag 결과 출력
+                tag_infos: List[Dict[str, Any]] = await self._get_tag_info(
+                    session,
+                    company_id=target_compnay_id,
+                )
+                for tag_item in tag_infos:
+                    if tag_item["lang_type"] == language:
+                        results.append(tag_item["tag_name"])                
 
         except Exception as e:
             logger.error(f"[ERROR] add_new_tag: {e}")
@@ -344,6 +471,7 @@ class CompanyService:
         finally:
             await db.aclose()
 
+        results = list(set(results)) # 중복제거
         return {
             "company_name": compnay_name,
             "tags": results,

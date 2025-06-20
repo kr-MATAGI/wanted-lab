@@ -152,7 +152,7 @@ async def add_new_tag(
 
     Returns:
         Dict[str, str]: 추가된 태그 정보
-    """
+    """  
     company_service: CompanyService = CompanyService()
     results: Dict[str, Any] = await company_service.add_new_tag(
         company_name,
