@@ -29,18 +29,24 @@ async def test_add_new_company():
                 }
             })
 
+        
         new_company = {
-            "company_name": {
-                "ko": item.company_ko,
-                "en": item.company_en,
-                "ja": item.company_ja,
-            },
+            "company_name": {},
             "tags": new_tags,
         }
-
+        return_lang_type: str = "ko"
+        if item.company_ko:
+            new_company["company_name"]["ko"] = item.company_ko
+            return_lang_type: str = "ko"
+        if item.company_en:
+            new_company["company_name"]["en"] = item.company_en
+            return_lang_type: str = "en"
+        if item.company_ja:
+            new_company["company_name"]["ja"] = item.company_ja
+            return_lang_type: str = "ja"
 
         # When
-        result = await company_service.add_new_company(new_company, language="ko")
+        result = await company_service.add_new_company(new_company, language=return_lang_type)
 
         # Then
         assert result != None
