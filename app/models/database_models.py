@@ -39,7 +39,7 @@ class CompanyName(Base):
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(Text, nullable=False)
+    name = Column(Text, nullable=True)
     company_id = Column(
         Integer,
         ForeignKey("tbl_company_ids.id"),

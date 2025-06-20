@@ -1,11 +1,7 @@
-from fastapi import UploadFile
 from typing import List, Dict, Any
-
 from sqlalchemy import select, delete
 
-from app.utils import Parser
 from app.models import (
-    CsvCompnay,
     CompanyID,
     CompanyName,
     CompanyNameRelation,

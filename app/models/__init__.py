@@ -1,4 +1,3 @@
-from app.models.csv_base import CsvCompnay
 from app.models.database_models import (
     CompanyID,
     Language,
@@ -9,7 +8,6 @@ from app.models.database_models import (
 )
 
 __all__ = [
-    "CsvCompnay",
     "CompanyID",
     "Language",
     "CompanyName",
