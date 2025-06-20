@@ -35,6 +35,9 @@ class SearchService:
                 stmt = select(
                     CompanyName,
                     Language,
+                ).join(
+                    Language,
+                    Language.id == CompanyName.language_id,
                 ).where(
                     Language.language_type == language,
                     CompanyName.name.like(f"%{company_name}%"),
@@ -54,5 +57,4 @@ class SearchService:
         finally:
             await db.aclose()
 
-        results = list(set(results)) # 중복제거
         return results
