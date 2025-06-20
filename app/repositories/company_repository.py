@@ -150,7 +150,7 @@ class CompanyRepository:
                     # company_name 추가
                     if language_obj.language_type not in company_infos["company_name"].keys():
                         company_infos["company_name"][language_obj.language_type] = company_name_obj.name
-                    
+
                     # tag 추가
                     tag_info = {
                         language_obj.language_type: tag_obj.tag_name,

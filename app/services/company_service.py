@@ -150,18 +150,21 @@ class CompanyService:
                 new_tag=tag_name_obj,
             )
 
-            # 회사 정보
-            company_infos: Dict[Dict[str, Any]] = await company_repository.get_company_info_by_company_id(
-                company_id=target_compnay_id,
-            )
+        # 최종 결과
+        company_infos: Dict[Dict[str, Any]] = await company_repository.get_company_info_by_company_id(
+            company_id=target_compnay_id,
+        )
+
+        # 결과
+        if not results["company_name"] and language in company_infos["company_name"].keys():
+            results["company_name"] = company_infos["company_name"][language]
             
-            # 결과
-            if not results["company_name"] and language in company_infos["company_name"].keys():
-                results["company_name"] = company_infos["company_name"][language]
-            
-            for tag in company_infos["tags"]:
-                if language == tag.get("lang_type") and tag.get(language) not in results["tags"]:
-                    results["tags"].append(tag.get(language))
+        for tag_item in company_infos["tags"]:
+            if (
+                language in tag_item.keys()
+                and tag_item.get(language) not in results["tags"]
+            ):
+                results["tags"].append(tag_item.get(language))
 
         return results
 
