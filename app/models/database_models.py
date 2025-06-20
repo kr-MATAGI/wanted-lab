@@ -34,9 +34,6 @@ class Language(Base):
 class CompanyName(Base):
     """회사 정보 모델"""
     __tablename__ = "tbl_company_names"
-    __table_args__ = (
-        UniqueConstraint('name', 'rel_id', name='tbl_company_names_name_rel_id_unique'),
-    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(Text, nullable=True)
@@ -84,7 +81,7 @@ class Tag(Base):
     """태그 정보 모델"""
     __tablename__ = "tbl_tags"
     __table_args__ = (
-        UniqueConstraint('tag_name', 'rel_id', name='tbl_tags_tag_name_rel_id_unique'),
+        UniqueConstraint('tag_name', 'company_id', 'language_id', name='tbl_tags_tag_name_compnay_id_language_id_unique'),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
