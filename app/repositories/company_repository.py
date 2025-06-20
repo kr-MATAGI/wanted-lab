@@ -354,7 +354,7 @@ class CompanyRepository:
                     Tag.company_id == company_id,
                 )
                 results = await session.execute(stmt)
-                tag_relation_id = results.scalar_one_or_none()
+                tag_relation_id = results.scalar()
 
         except Exception as e:
             logger.error(f"[ERROR] get_tag_relation_id: {e}")

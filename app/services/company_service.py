@@ -197,13 +197,11 @@ class CompanyService:
             tag_name=tag,
         )
 
-        if not tag_relation_id:
-            return None
-
         # 태그 관계 id 사용해 삭제
-        await company_repository.delete_tag_info(
-            tag_rel_id=tag_relation_id,
-        )
+        if tag_relation_id:
+            await company_repository.delete_tag_info(
+                tag_rel_id=tag_relation_id,
+            )
 
         # 최종 결과 반환
         company_infos = await company_repository.get_company_info_by_company_id(
