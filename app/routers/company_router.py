@@ -115,16 +115,16 @@ async def add_new_company(
       "company_name": {
         "ko": "라인 프레쉬",
         "tw": "LINE FRESH",
-        "en": LINE FRESH"
+        "en": "LINE FRESH"
       },
       "tags": [
         {
           "tag_name": {
             "ko": "태그_1",
             "tw": "tag_1",
-            "en": "tag_1",
+            "en": "tag_1"
           }
-        },
+        }
       ]
     }
     ```
