@@ -54,4 +54,5 @@ class SearchService:
         finally:
             await db.aclose()
 
+        results = list(set(results)) # 중복제거
         return results
