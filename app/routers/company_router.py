@@ -47,7 +47,7 @@ async def get_company_info(
     ---
     **Example Request**
     ```http
-    GET /Wantedlab
+    GET /companies/Wantedlab
     x-wanted-language: ko
     ```
 
