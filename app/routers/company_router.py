@@ -133,7 +133,7 @@ async def add_new_company(
     ```json
     {
       "company_name": "LINE FRESH",
-      "tags": ["tag_1", "tag_8", "tag_15"],
+      "tags": ["tag_1"],
     }
     ```
     """
