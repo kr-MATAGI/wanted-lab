@@ -1,4 +1,3 @@
-import os
 from fastapi import APIRouter, Request, UploadFile, File, HTTPException, status
 from typing import Dict, List, Any
 
@@ -7,7 +6,6 @@ from app.schemas import (
     CompanyInfoResponse,
     CompanyAddRequest,
     CompanyAddResponse,
-    TagAddRequest,
     TagInfo,
 )
 from app.utils import setup_logger
@@ -17,16 +15,8 @@ from app.utils import setup_logger
 router = APIRouter()
 
 # Logger 
-logger = setup_logger("CompanyRouter")
+logger = setup_logger("Company_Router")
 
-# Global Variable
-ALLOWED_EXTENSIONS = {"csv"}
-
-def validate_file(file: UploadFile):
-    """
-    업로드된 파일이 허용되는지 검사
-    """
-    return file.filename.split(".")[-1] in ALLOWED_EXTENSIONS
 
 ### GET
 @router.get("/{company_name}")
@@ -73,11 +63,10 @@ async def get_company_info(
     ]
     ```
     """
-
     company_service: CompanyService = CompanyService()
     company_info: Dict[str, Any] = await company_service.get_company_info(
         company_name,
-        language=request.headers.get("x-wanted-language", "ko"),
+        language=request.headers.get("x-wanted-language"),
     )
 
     # 검색 결과가 없음 -> 404 Return
@@ -91,48 +80,6 @@ async def get_company_info(
 
 
 ### POST
-@router.post("/upload")
-async def upload_company_from_csv(
-    file: UploadFile = File(...),
-):
-    """
-    CSV 파일 업로드를 통해 초기 회사 정보 추가 (임의 추가 함수)
-    
-    Args:
-        pass
-    
-    Returns:
-        results (Dict[str, str]): 추가된 회사 개수
-    """        
-    
-    # 유효성 검사
-    if not validate_file(file):
-        raise HTTPException(status_code=400, detail="Invalid file type")
-    
-    try:
-        os.makedirs("./tmps", exist_ok=True)
-        
-        file_path = f"./tmps/{file.filename}"
-        with open(file_path, "wb") as f:
-            f.write(await file.read())
-        logger.info(f"Uploaded file: {file_path}")
-
-        company_service: CompanyService = CompanyService()
-        results: Dict[str, str] = await company_service.add_company_from_csv(
-            file_path,
-    )
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    finally:
-        # 업로드된 파일 삭제
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            logger.info(f"Deleted uploaded file: {file_path}")
-    
-    return results
-
 @router.post("/")
 async def add_new_company(
     new_company_info: CompanyAddRequest,
@@ -194,7 +141,7 @@ async def add_new_company(
     company_service: CompanyService = CompanyService()
     add_results: Dict[str, Any] = await company_service.add_new_company(
         new_company_info.model_dump(),
-        language=request.headers.get("x-wanted-language", "tw"),
+        language=request.headers.get("x-wanted-language"),
     )
 
     return CompanyAddResponse(**add_results)
@@ -270,7 +217,7 @@ async def add_new_tag(
     results: Dict[str, Any] = await company_service.add_new_tag(
         company_name,
         tags,
-        language=request.headers.get("x-wanted-language", "ko"),
+        language=request.headers.get("x-wanted-language"),
     )
 
     return CompanyAddResponse(**results)
@@ -330,7 +277,7 @@ async def delete_tag(
     results = await company_service.delete_tag(
         compnay_name,
         tag,
-        language=request.headers.get("x-wanted-language", "ko"),
+        language=request.headers.get("x-wanted-language"),
     )
 
     return CompanyAddResponse(**results)

@@ -279,44 +279,6 @@ class CompanyService:
         if do_commit:
             await session.commit()
 
-    async def add_company_from_csv(
-        self,
-        file_path: str,
-    ):
-        """
-        업로드된 csv 파일 업로드 처리
-        """
-        parser: Parser = Parser()
-        csv_results: List[CsvCompnay] = await parser.parse_csv_by_file_path(file_path)
-
-        db = get_db()
-        try:
-            pass 
-            # async for session in db:
-            #     for csv_item in csv_results:
-            #         new_company: Dict[str, Any] = (
-            #             company_name={
-            #                 "ko": csv_item.company_ko,
-            #                 "en": csv_item.company_en,
-            #                 "ja": csv_item.company_ja,
-            #             },
-            #             tags=[
-            #                 csv_item.tag_ko,
-            #                 csv_item.tag_en,
-            #                 csv_item.tag_ja,
-            #             ],
-            #         )
-
-            #         await self.add_new_company(new_company, "ko")
-        
-        except Exception as e:
-            raise e
-        
-        finally:
-            await db.aclose()
-        
-        return
-
 
     async def get_company_info(
         self,

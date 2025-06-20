@@ -43,13 +43,11 @@ async def search_company_name(query: str, request: Request):
     ]
     ```
     """
-    wanted_lang: str = request.headers.get("x-wanted-language", "ko")
-
-    # 검색
+    
     search_service: SearchService = SearchService()
     search_results: List[Dict[str, str]] = await search_service.search_company_name(
         query,
-        wanted_lang,
+        request.headers.get("x-wanted-language"),
     )
     
     return [SearchResponse(company_name=item) for item in search_results]

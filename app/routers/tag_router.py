@@ -8,7 +8,6 @@ from app.schemas import TagSearchResponse
 router = APIRouter()
 
 
-
 ### GET
 @router.get("/")
 async def search_by_tag_name(
@@ -57,7 +56,7 @@ async def search_by_tag_name(
     tag_service: TagService = TagService()
     results: List[str] = await tag_service.search_by_tag_name(
         tag_name=query,
-        language=request.headers.get("x-wanted-language", "ko"),
+        language=request.headers.get("x-wanted-language"),
     )
 
     return [TagSearchResponse(company_name=x) for x in results]
