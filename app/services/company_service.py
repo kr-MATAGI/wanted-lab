@@ -66,7 +66,7 @@ class CompanyService:
             - language (str): 출력 언어
 
         Returns:
-            - results (CompanyAddResponse): 추가된 회사 정보
+            - results (CompanyResponse): 추가된 회사 정보
         """
         results: Dict[str, Any] = {
             "company_name": "",

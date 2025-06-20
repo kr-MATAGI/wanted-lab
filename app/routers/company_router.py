@@ -4,8 +4,8 @@ from typing import Dict, List, Any
 from app.services import CompanyService
 from app.schemas import (
     CompanyInfoResponse,
-    CompanyAddRequest,
-    CompanyAddResponse,
+    CompanyRequest,
+    CompanyResponse,
     TagInfo,
 )
 from app.utils import setup_logger
@@ -82,7 +82,7 @@ async def get_company_info(
 ### POST
 @router.post("/")
 async def add_new_company(
-    new_company_info: CompanyAddRequest,
+    new_company_info: CompanyRequest,
     request: Request,
 ):
     """
@@ -95,13 +95,13 @@ async def add_new_company(
 
     ---
     **Parameters**
-      - **new_company_info** (**CompanyAddRequest**):  
+      - **new_company_info** (**CompanyRequest**):  
         등록할 회사의 상세 정보 (다국어 정보 포함 가능)
       - **request** (**Request**):  
         FastAPI 요청 객체 (헤더 정보 활용)
 
     **Returns**
-      - **CompanyAddResponse**:  
+      - **CompanyResponse**:  
         저장된 회사 정보 (지정한 언어로 반환)
 
     ---
@@ -144,7 +144,7 @@ async def add_new_company(
         language=request.headers.get("x-wanted-language"),
     )
 
-    return CompanyAddResponse(**add_results)
+    return CompanyResponse(**add_results)
 
 
 
@@ -172,7 +172,7 @@ async def add_new_tag(
         FastAPI 요청 객체 (헤더 정보 활용)
 
     **Returns**
-      - **CompanyAddResponse**:
+      - **CompanyResponse**:
         추가된 태그 정보 (지정한 언어별)
 
     ---
@@ -220,7 +220,7 @@ async def add_new_tag(
         language=request.headers.get("x-wanted-language"),
     )
 
-    return CompanyAddResponse(**results)
+    return CompanyResponse(**results)
 
 
 ### DELETE
@@ -247,7 +247,7 @@ async def delete_tag(
         FastAPI 요청 객체 (헤더 정보 활용)
 
     **Returns**
-      - **CompanyAddResponse**:
+      - **CompanyResponse**:
         태그 삭제 후 남아있는 태그 정보 (지정한 언어별)
 
     ---
@@ -287,4 +287,4 @@ async def delete_tag(
           detail="information not found",
       )
 
-    return CompanyAddResponse(**results)
+    return CompanyResponse(**results)

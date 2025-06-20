@@ -8,10 +8,10 @@ class CompanyInfoResponse(BaseModel):
     company_name: str
     tags: List[str]
 
-class CompanyAddRequest(BaseModel):
+class CompanyRequest(BaseModel):
     company_name: Dict[str, str]
     tags: List[TagName]
 
-class CompanyAddResponse(BaseModel):
+class CompanyResponse(BaseModel):
     company_name: str
     tags: List[str]

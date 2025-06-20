@@ -1,8 +1,8 @@
 from app.schemas.search_schema import SearchResponse
 from app.schemas.company_schema import (
     CompanyInfoResponse,
-    CompanyAddRequest,
-    CompanyAddResponse,
+    CompanyRequest,
+    CompanyResponse,
 )
 from app.schemas.tag_schema import (
     TagInfo,
@@ -12,8 +12,8 @@ from app.schemas.tag_schema import (
 __all__ = [
     "SearchResponse",
     "CompanyInfoResponse",
-    "CompanyAddRequest",
-    "CompanyAddResponse",
+    "CompanyRequest",
+    "CompanyResponse",
     "TagSearchResponse",
     "TagInfo",
 ]
