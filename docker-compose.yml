@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:17
+    container_name: wantedlab_postgres
+    environment:
+      POSTGRES_DB: wantedlab
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./dump.sql:/docker-entrypoint-initdb.d/dump.sql
+    networks:
+      - wantedlab_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d wantedlab"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI 애플리케이션
+  app:
+    build: .
+    container_name: wantedlab_app
+    ports:
+      - "8001:8001"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=wantedlab
+      - DB_ECHO=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - wantedlab_network
+    volumes:
+      - ./company_tag_sample.csv:/app/company_tag_sample.csv
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  wantedlab_network:
+    driver: bridge 
