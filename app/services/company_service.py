@@ -43,7 +43,9 @@ class CompanyService:
         )
 
         # 결과 반환
-        results["company_name"] = company_info["company_name"][language]
+        if language in company_info["company_name"].keys():
+            results["company_name"] = company_info["company_name"][language]
+
         for tag_info in company_info["tags"]:
             if language in tag_info.keys():
                 results["tags"].append(tag_info[language])
@@ -148,18 +150,18 @@ class CompanyService:
                 new_tag=tag_name_obj,
             )
 
-            # compay_id, language에 따른 tag 결과 출력
-            tag_infos: List[Dict[str, Any]] = await company_repository.get_tag_info(
+            # 회사 정보
+            company_infos: Dict[Dict[str, Any]] = await company_repository.get_company_info_by_company_id(
                 company_id=target_compnay_id,
             )
-
-            for tag_item in tag_infos:
-                if tag_item["lang_type"] == language:
-                    if not results["company_name"]:
-                        results["company_name"] = tag_item["company_name"]
-                    
-                    if tag_item["tag_name"] not in results["tags"]:
-                        results["tags"].append(tag_item["tag_name"])
+            
+            # 결과
+            if not results["company_name"] and language in company_infos["company_name"].keys():
+                results["company_name"] = company_infos["company_name"][language]
+            
+            for tag in company_infos["tags"]:
+                if language == tag.get("lang_type") and tag.get(language) not in results["tags"]:
+                    results["tags"].append(tag.get(language))
 
         return results
 
@@ -186,41 +188,31 @@ class CompanyService:
         if not compnay_id:
             return None
 
-        # 회사 id를 통해 태그 정보 조회
-        tag_infos = await company_repository.get_tag_info(
+        # 회사 id와 tag_name을 통해 태그 관계 id 조회
+        tag_relation_id: int = await company_repository.get_tag_relation_id(
             company_id=compnay_id,
+            tag_name=tag,
         )
 
-        delete_tag_ids: List[int] = []
-        for tag_item in tag_infos:
-            if tag_item["tag_name"] == tag:
-                delete_tag_ids.append((tag_item["tag_id"], tag_item["rel_id"]))
-        delete_tag_ids = list(set(delete_tag_ids))
+        if not tag_relation_id:
+            return None
 
-        # tag_name이 일치하면 tag_id를 기반으로 삭제
-        # tag_realtions 도 삭제
-        for tag_id, rel_id in delete_tag_ids:
-            await company_repository.delete_tag_info(
-                tag_id=tag_id,
-                tag_rel_id=rel_id,
-            )
-            logger.debug(f"delete_tag_info: tag_id: {tag_id}, rel_id: {rel_id}")
-    
+        # 태그 관계 id 사용해 삭제
+        await company_repository.delete_tag_info(
+            tag_rel_id=tag_relation_id,
+        )
 
         # 최종 결과 반환
-        tag_infos = await company_repository.get_tag_info(
+        company_infos = await company_repository.get_company_info_by_company_id(
             company_id=compnay_id,
         )
 
-        for tag_item in tag_infos:
-            if tag_item["lang_type"] == language:
-                if (
-                    not results["company_name"] 
-                    and tag_item["company_lang_id"] == tag_item["lang_id"]
-                ):
-                    results["company_name"] = tag_item["company_name"]
+        if not results["company_name"] and language in company_infos["company_name"].keys():
+            results["company_name"] = company_infos["company_name"][language]
 
-                if tag_item["tag_name"] not in results["tags"]:
-                    results["tags"].append(tag_item["tag_name"])
+        print(company_infos["tags"])
+        for tag_item in company_infos["tags"]:
+            if language in tag_item.keys() and tag_item.get(language) not in results["tags"]:
+                results["tags"].append(tag_item.get(language))
 
         return results

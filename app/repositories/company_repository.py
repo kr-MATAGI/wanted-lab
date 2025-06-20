@@ -295,7 +295,6 @@ class CompanyRepository:
     
     async def delete_tag_info(
         self,
-        tag_id: int,
         tag_rel_id: int,
     ):
         """
@@ -314,88 +313,43 @@ class CompanyRepository:
                 await session.execute(stmt)
 
                 # tbl_tag_relations -> tag_ids에서 삭제
-                stmt = select(
+                stmt = delete(
                     TagRelation,
                 ).where(
                     TagRelation.id == tag_rel_id,
                 )
-                results = await session.execute(stmt)
-                tag_relation_obj: TagRelation = results.scalar_one()
-                tag_relation_obj.tag_ids.remove(tag_id)
-
-                # 만약 tag_ids가 비어있다면 row 삭제
-                if not tag_relation_obj.tag_ids:
-                    stmt = delete(
-                        TagRelation,
-                    ).where(
-                        TagRelation.id == tag_rel_id
-                    )
-                    await session.execute(stmt)
+                await session.execute(stmt)
 
                 await session.commit()
             
         except Exception as e:
             logger.error(f"[ERROR] delete_tag_info: {e}")
             raise e
-
-
-    async def get_tag_info(
+        
+    async def get_tag_relation_id(
         self,
         company_id: int,
+        tag_name: str,
     ):
         """
-        회사 ID를 통해 태그 정보 가져오기
-        
-        Returns:
-        [
-            {
-                "company_name": string,
-                "company_lang_id": integer,
-                "lang_id": integer,
-                "lang_type": string,
-                "tag_id": integer,
-                "tag_name": string,
-                "rel_id": integer,
-            }
-        ]   
+        태그 관계 id 조회
         """
-        tag_infos: List[Dict[str, Any]] = []
+        tag_relation_id: int = 0
+
         try:
             async for session in get_db():
                 stmt = select(
-                    Tag,
-                    Language,
-                    CompanyName,
-                ).join(
-                    Language,
-                    Language.id == Tag.language_id,
-                ).join(
-                    CompanyName,
-                    CompanyName.company_id == Tag.company_id,
+                    Tag.rel_id,
                 ).where(
+                    Tag.tag_name == tag_name,
                     Tag.company_id == company_id,
-                    CompanyName.company_id == company_id,
                 )
                 results = await session.execute(stmt)
-                rows = results.all()
-                
-                for row in rows:
-                    tag_obj: Tag = row[0]
-                    language_obj: Language = row[1]
-                    company_name_obj: CompanyName = row[2]
-                    
-                    tag_infos.append({
-                        "company_name": company_name_obj.name,
-                        "company_lang_id": company_name_obj.language_id,
-                        "lang_id": language_obj.id,
-                        "lang_type": language_obj.language_type,
-                        "tag_id": tag_obj.id,
-                        "tag_name": tag_obj.tag_name,
-                        "rel_id": tag_obj.rel_id,
-                    })
-            
-        except Exception as e:
-            logger.error(f"[ERROR] get_tag_info: {e}")
-            raise e
+                tag_relation_id = results.scalar_one()
 
-        return tag_infos
+        except Exception as e:
+            logger.error(f"[ERROR] get_tag_relation_id: {e}")
+            raise e
+        
+        return tag_relation_id
+        
