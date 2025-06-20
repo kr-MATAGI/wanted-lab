@@ -28,6 +28,7 @@ class Language(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     language_type = Column(Text, nullable=False)
+    add_date = Column(DateTime, nullable=False, default=func.now())
 
 
 class CompanyName(Base):

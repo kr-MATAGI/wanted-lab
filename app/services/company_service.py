@@ -86,6 +86,7 @@ class CompanyService:
                 rel_id=tbl_company_name_relations.id,
             )
             session.add(new_company_name)
+            await session.flush() # id 먼저 받기
 
             # 관계 추가
             tbl_company_name_relations.name_ids.append(new_company_name.id)

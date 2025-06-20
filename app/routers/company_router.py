@@ -114,7 +114,7 @@ async def add_new_company(
     request: Request,
 ):
     """
-    - 새로운 회사 추가
+    3. 새로운 회사 추가
         - 새로운 언어도 같이 추가 될 수 있다.
         - 저장 완료 후 header의 x-wanted-language 언어값에 따라 해당 언어로 출력
         
